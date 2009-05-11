@@ -111,12 +111,12 @@ class modestMMarkers :
 
             ctx = cairo.Context(cairo_surface)        
             ctx.move_to(pt.x, pt.y)
-            ctx.arc(pt.x, pt.y, w, radius, 360)
+            ctx.arc(pt.x, pt.y, radius, 0, 360)
             ctx.set_source_rgba(r, g, b, opacity_fill)
             ctx.fill()
 
             if opacity_border :
-                ctx.arc(pt.x, pt.y, w, radius, 360)
+                ctx.arc(pt.x, pt.y, radius, 0, 360)
                 ctx.set_source_rgba(r, g, b, opacity_border)
                 ctx.stroke()
 
