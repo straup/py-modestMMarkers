@@ -1,3 +1,10 @@
+__package__    = "modestMMarkers"
+__version__    = "0.2"
+__author__     = "Aaron Straup Cope"
+__url__        = "http://github.com/straup/py-modestMMarkers"
+__date__       = "$Date: 2009/05/09 17:05:27 $"
+__copyright__  = "Copyright (c) 2009 Aaron Straup Cope. BSD license : http://www.modestmaps.com/license.txt"
+
 import PIL
 import cairo
 import ModestMaps
@@ -6,7 +13,7 @@ import array
 #
 # Utility functions (private, so don't come crying to me if they vanish)
 #
-
+    
 def _pil2cairo (img) :
 
     # check me...
@@ -30,6 +37,32 @@ def _cairo2pil(surface) :
     
     return PIL.Image.frombuffer(mode, (width, height), surface.get_data(), "raw", mode, 0, 1)
 
+def _calculate_bbox_for_coords (coords) :
+
+    sw_lat = None
+    sw_lon = None
+    ne_lat = None
+    ne_lon = None
+    
+    for c in coords :
+        
+        lat = c['latitude']
+        lon = c['longitude']
+
+        if not sw_lat or lat < sw_lat :
+            sw_lat = lat
+                
+        if not sw_lon or lon < sw_lon :
+            sw_lon = lon
+                        
+        if not ne_lat or lat > ne_lat :
+            ne_lat = lat
+
+        if not ne_lon or lon > ne_lon :
+            ne_lon = lon
+
+    return (sw_lat, sw_lon, ne_lat, ne_lon)
+
 #
 # You are here
 #
@@ -41,48 +74,67 @@ class modestMMarkers :
 
     # #########################################################
     
-    def draw_points (self, mm_img, points, **kwargs):
+    def draw_points (self, mm_img, coords, **kwargs):
 
         r = 255
         g = 0
         b = 132
 
         radius = 10
-        opacity = .4
+        opacity_fill = .4
+        opacity_border = None
         
+        if kwargs.has_key('color') :
+            r = kwargs['color'][0]
+            g = kwargs['color'][1]
+            b = kwargs['color'][2]
+
         if kwargs.has_key('colour') :
             r = kwargs['colour'][0]
             g = kwargs['colour'][1]
             b = kwargs['colour'][2]
 
-        if kwargs.has_key('opacity') :
-            opacity = kwargs['opacity']
+        if kwargs.has_key('opacity_fill') :
+            opacity_fill = kwargs['opacity_fill']
+
+        if kwargs.has_key('opacity_border') :
+            opacity_border = kwargs['opacity_border']
 
         if kwargs.has_key('radius') :
             radius = kwargs['radius']
             
         cairo_surface = _pil2cairo(mm_img)
 
-        for c in points :
+        for c in coords :
 
-            pt = _latlon_to_point(self.mm_obj, c['latitude'], c['longitude'])
-            x = pt.x
-            y = pt.y
-            
+            pt = self._coord_to_point(c)
+
             ctx = cairo.Context(cairo_surface)        
-            ctx.move_to(x, y)
-            ctx.arc(x, y, w, radius, 360)
-            ctx.set_source_rgba(r, g, b, opacity)
+            ctx.move_to(pt.x, pt.y)
+            ctx.arc(pt.x, pt.y, w, radius, 360)
+            ctx.set_source_rgba(r, g, b, opacity_fill)
             ctx.fill()
 
+            if opacity_border :
+                ctx.arc(pt.x, pt.y, w, radius, 360)
+                ctx.set_source_rgba(r, g, b, opacity_border)
+                ctx.stroke()
+
+                
         return _cairo2pil(cairo_surface)
 
     # #########################################################
 
-    # PLEASE WRITE ME...
-    
-    def draw_boundingbox (self) :
-        pass
+    def draw_bounding_box (self, mm_img, coords, **kwargs) :
+
+        (sw_lat, sw_lon, ne_lat, ne_lon) = _calculate_bbox_for_coords(coords)
+
+        bbox_coords = ({'latitude':sw_lat, 'longitude': sw_lon},
+                       {'latitude':sw_lat, 'longitude': ne_lon},
+                       {'latitude':ne_lat, 'longitude': ne_lon},
+                       {'latitude':ne_lat, 'longitude': sw_lon})
+
+        return self.draw_polyline(mm_img, bbox_coords, **kwargs)
     
     # #########################################################
     
@@ -94,6 +146,11 @@ class modestMMarkers :
 
         opacity_fill = .4
         opacity_border = 1
+
+        if kwargs.has_key('color') :
+            r = kwargs['color'][0]
+            g = kwargs['color'][1]
+            b = kwargs['color'][2]
         
         if kwargs.has_key('colour') :
             r = kwargs['colour'][0]
@@ -112,17 +169,14 @@ class modestMMarkers :
             points = []
 
             for c in coords :
-
-                loc = ModestMaps.Geo.Location(c['latitude'], c['longitude'])
-                pt = self.mm_obj.locationPoint(loc)
-                points.append(pt)
+                points.append(self._coord_to_point(c))
 
             if not kwargs.has_key('no_fill') :
-                ctx = self.draw_polyline_points(cairo_surface, points)
+                ctx = self._draw_polyline_points(cairo_surface, points)
                 ctx.set_source_rgba(r, g, b, opacity_fill)
                 ctx.fill()
 
-            ctx = self.draw_polyline_points(cairo_surface, points)
+            ctx = self._draw_polyline_points(cairo_surface, points)
             ctx.set_source_rgba(r, g, b, opacity_border)
             ctx.set_line_width(2)        
             ctx.stroke()
@@ -135,8 +189,18 @@ class modestMMarkers :
         return self.draw_polylines(mm_img, [coords], **kwargs)
 
     # #########################################################
+
+    #
+    # Private
+    #
     
-    def draw_polyline_points (self, surface, points) :
+    def _coord_to_point (self, c) :
+        loc = ModestMaps.Geo.Location(c['latitude'], c['longitude'])
+        return self.mm_obj.locationPoint(loc)
+
+    # #########################################################
+    
+    def _draw_polyline_points (self, surface, points) :
         
         first = points[0]
         x = int(first.x)
