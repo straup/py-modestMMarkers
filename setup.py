@@ -1,4 +1,4 @@
-# $Id: setup.py,v 1.1 2009/05/09 17:05:26 asc Exp $
+# $Id: setup.py,v 1.1 2009/05/11 15:40:25 asc Exp $
 
 # http://peak.telecommunity.com/DevCenter/setuptools
 # http://ianbicking.org/docs/setuptools-presentation/
@@ -26,7 +26,7 @@ setup(
 
     # TO DO: proper packages for ModestMaps...
     
-    install_requires = ['pycairo', 'Imaging', 'elementtree'],
+    install_requires = ['pycairo', 'Imaging'],
     dependency_links = ['http://www.pythonware.com/products/pil/'],
 
     author = "Aaron Straup Cope",
