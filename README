@@ -1,3 +1,54 @@
-Work in progress. Trying to undo six months of kitchen-sink code.
+modestMMarkers is a simple helper class for drawing polylines and point markers
+on ModestMaps derived images using the Cairo vector libraries.
 
-(See also: http://www.aaronland.info/weblog/2009/05/02/yakshed/#turkishmmap)
+--
+        
+Here is a very simple example of how to use the code, written in more-or-less
+working pseudo-code:
+
+	# points is just a list/tuple of dictionaries
+        # with latitude and longitude keys 
+
+        points = [ {'latitude': 123.45, 'longitude' : 67.890}, ... ]
+
+        # The ModestMaps Python interface is out of scope for this
+        # document so let's assume you've got things set up and are
+        # calling the mapByExtent method
+
+        mm_obj = ModestMaps.mapByExtent( ... )
+        mm_img = mm_obj.draw()
+            
+	# Hey look! modestMMarkers!!
+
+        markers = modestMMarkers.modestMMarkers(mm_obj)
+
+        mm_img = markers.draw_bounding_box(mm_img, points, colour=(1, 0, .005), opacity_fill=.1)
+        mm_img = markers.draw_polylines(mm_img, polys)
+	mm_img = markers.draw_points(mm_img, points, colour=(.5, 0, 1))
+
+	# That's it. Really
+        
+        mm_img.save("/path/to/map.png")
+
+--
+
+In order to use modestMMarkers you will need to install ModestMaps by hand. You
+can get all the details for that here:
+
+http://modestmaps.mapstraction.com/trac/wiki/SubversionAccess
+
+There are other dependencies, notably py-cairo and the Python Imaging
+Library. The setup.py installation script *should* try to do the right thing but
+if you need to install those packages by hand as well, here are the relevant
+links: 
+
+http://cairographics.org/pycairo/
+
+http://www.pythonware.com/products/pil/
+
+--
+
+modestMMarker has a long, twisty and tortured beginning that it's trying to
+leave behind. If you're bored and want to read about it, start here:
+
+http://www.aaronland.info/weblog/2009/05/02/yakshed/#turkishmmap
