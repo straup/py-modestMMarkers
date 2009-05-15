@@ -69,13 +69,43 @@ def _calculate_bbox_for_coords (coords) :
 
 class modestMMarkers :
 
+    """modestMMarkers - a simple helper class for drawing polylines
+    and point markers on ModestMaps derived images using the Cairo
+    vector libraries."""
+    
     def __init__ (self, mm_obj) :
+
+        """
+
+        WRITE ME
+
+        """
+        
         self.mm_obj = mm_obj
 
     # #########################################################
     
     def draw_points (self, mm_img, coords, **kwargs):
 
+        """
+        Draw a series of points (defined by coords) on a ModestMaps derived
+        image (defined by mm_img).
+
+        Additional valid arguments are:
+
+        * colo(r) : a tuple containing RBG values (default is (255, 0, 132)
+
+        * opacity_fill : a float defining the opacity of each point (default is .4)
+
+        * border_fill : a float defining the opacity of the border for each
+          point (default is None)
+
+        * radius: the radius of each point, in pixels (default is 10)
+
+        Returns a PIL image.
+        
+        """
+        
         r = 255
         g = 0
         b = 132
