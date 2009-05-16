@@ -76,9 +76,15 @@ class modestMMarkers :
     def __init__ (self, mm_obj) :
 
         """
+        Create a new modestMMarkers object.
 
-        WRITE ME
+        Required arguments are a valid ModestMaps object returned
+        by one of the 'mapping' methods. For example:
 
+        	mm_obj = ModestMaps.mapByExtent(provider, sw, ne, dims)
+        	mm_img = mm_obj.draw()
+
+        	markers = modestMMarkers.modestMMarkers(mm_obj)        
         """
         
         self.mm_obj = mm_obj
@@ -91,6 +97,8 @@ class modestMMarkers :
         Draw a series of points (defined by coords) on a ModestMaps derived
         image (defined by mm_img).
 
+        coords is a list of dicts, whose keys are 'latitude' and 'longitude'.
+        
         Additional valid arguments are:
 
         * colo(r) : a tuple containing RBG values (default is (255, 0, 132)
@@ -103,7 +111,6 @@ class modestMMarkers :
         * radius: the radius of each point, in pixels (default is 10)
 
         Returns a PIL image.
-        
         """
         
         r = 255
@@ -157,6 +164,26 @@ class modestMMarkers :
 
     def draw_bounding_box (self, mm_img, coords, **kwargs) :
 
+        """
+        Draw and fill a bounding box (defined by coords) on a ModestMaps
+        derived image (defined by mm_img).
+
+        coords is a list of dicts, whose keys are 'latitude' and
+        'longitude'. (You only need the four points to your bounding
+        box as the method will take care of closing the box.)
+        
+        Additional valid arguments are:
+
+        * colo(r) : a tuple containing RBG values (default is (255, 0, 132)
+
+        * opacity_fill : a float defining the opacity of each point (default is .4)
+
+        * border_fill : a float defining the opacity of the border for each
+          point (default is None)
+
+        Returns a PIL image.
+        """
+
         (sw_lat, sw_lon, ne_lat, ne_lon) = _calculate_bbox_for_coords(coords)
 
         bbox_coords = ({'latitude':sw_lat, 'longitude': sw_lon},
@@ -169,6 +196,25 @@ class modestMMarkers :
     # #########################################################
     
     def draw_polylines (self, mm_img, polylines, **kwargs) :
+
+        """
+        Draw and fill a list of polylines (defined by coords) on a ModestMaps
+        derived image (defined by mm_img).
+
+        coords is a list of list of dicts, whose keys are 'latitude' and
+        'longitude'.
+
+        Additional valid arguments are:
+
+        * colo(r) : a tuple containing RBG values (default is (255, 0, 132)
+
+        * opacity_fill : a float defining the opacity of each point (default is .4)
+
+        * border_fill : a float defining the opacity of the border for each
+          point (default is None)
+
+        Returns a PIL image.
+        """
 
         r = 255
         g = 0
@@ -216,6 +262,25 @@ class modestMMarkers :
     # #########################################################
     
     def draw_polyline (self, mm_img, coords, **kwargs) :
+
+        """
+        Draw and fill a single polyline (defined by coords) on a ModestMaps
+        derived image (defined by mm_img).
+
+        coords is a list of dicts, whose keys are 'latitude' and 'longitude'.
+
+        Additional valid arguments are:
+
+        * colo(r) : a tuple containing RBG values (default is (255, 0, 132)
+
+        * opacity_fill : a float defining the opacity of each point (default is .4)
+
+        * border_fill : a float defining the opacity of the border for each
+          point (default is None)
+
+        Returns a PIL image.
+        """
+        
         return self.draw_polylines(mm_img, [coords], **kwargs)
 
     # #########################################################
