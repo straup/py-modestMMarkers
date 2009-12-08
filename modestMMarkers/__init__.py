@@ -92,37 +92,6 @@ class modestMMarkers :
         self.mm_obj = mm_obj
 
     # #########################################################
-
-    def draw_sequence (self, mm_img, sequence, **kwargs) :
-
-	cairo_surface = self._setup_surface(mm_img)
-        
-        for action in sequence :
-
-        	method = action[0]
-        	data = action[1]
-
-                if len(action) == 3:
-			extra = action[2]
-		else :
-                    	extra = {}
-
-                extra['return_as_cairo'] = True
-                
-            	if method == 'points' :
-			cairo_surface = self.draw_points(cairo_surface, data, **extra)
-                elif method == 'polys' :
-                    	cairo_surface = self.draw_polylines(cairo_surface, data, **extra)
-                elif method == 'bbox' :
-                    	cairo_surface = self.draw_bounding_box(cairo_surface, data, **extra)
-                else :
-                    	pass
-
-	#
-
-        return self._return_surface(cairo_surface, **kwargs)
-
-    # #########################################################
     
     def draw_points (self, mm_img, coords, **kwargs):
 
@@ -145,6 +114,9 @@ class modestMMarkers :
 
         * radius: the radius of each point, in pixels (default is 10)
 
+	* line_width: the width of the line used to stroke the border (default
+	  is 2)
+        
 	* return_as_cairo: a boolean indicating whether to return the image as
           a cairo.ImageSurface object (default is False)
 
@@ -244,6 +216,9 @@ class modestMMarkers :
         * border_fill : a float defining the opacity of the border for each
           point (default is None)
 
+	* line_width: the width of the line used to stroke the border (default
+	  is 2)
+
 	* return_as_cairo: a boolean indicating whether to return the image as
           a cairo.ImageSurface object (default is False)
 
@@ -280,6 +255,9 @@ class modestMMarkers :
 
         * opacity_border : a float defining the opacity of the border for each
           point (default is None)
+
+	* line_width: the width of the line used to stroke the border (default
+	  is 2)
 
 	* return_as_cairo: a boolean indicating whether to return the image as
           a cairo.ImageSurface object (default is False)
@@ -374,6 +352,9 @@ class modestMMarkers :
         * border_fill : a float defining the opacity of the border for each
           point (default is None)
 
+	* line_width: the width of the line used to stroke the border (default
+	  is 2)
+
 	* return_as_cairo: a boolean indicating whether to return the image as
           a cairo.ImageSurface object (default is False)
 
@@ -384,6 +365,64 @@ class modestMMarkers :
 
     # #########################################################
 
+    def draw_sequence (self, mm_img, sequence, **kwargs) :
+
+	"""
+	Draw a sequence of markers on a ModestMap derived image (defined by
+	mm_img) in a single pass rather than converting the image to and from
+	the PIL and cairo.ImageSurface formats.
+
+    	sequence is a list of marker tuples to draw, consisting of an action, a
+    	list of coordinate and any optional keyword arguments to pass to the
+    	delegate method (the one that will actually draw the markers)
+        
+	Valid actions are:
+
+    	* points (calls 'draw_points')
+
+        * polys (calls 'draw_polylines')
+
+        * poly (calls 'draw_polyline')
+
+	* bbox (calls 'draw_bbox')
+
+        Additional valid arguments are:
+
+	* return_as_cairo: a boolean indicating whether to return the image as
+          a cairo.ImageSurface object (default is False)
+        
+        Returns a PIL image (unless the 'return_as_cairo' flag is True).
+        """
+        
+	cairo_surface = self._setup_surface(mm_img)
+        
+        for action in sequence :
+
+        	method = action[0]
+        	data = action[1]
+
+                if len(action) == 3:
+			extra = action[2]
+		else :
+                    	extra = {}
+                
+                extra['return_as_cairo'] = True
+                
+            	if method == 'points' :
+			cairo_surface = self.draw_points(cairo_surface, data, **extra)
+                elif method == 'polys' :
+                    	cairo_surface = self.draw_polylines(cairo_surface, data, **extra)
+                elif method == 'bbox' :
+                    	cairo_surface = self.draw_bounding_box(cairo_surface, data, **extra)
+                else :
+                    	pass
+
+	#
+
+        return self._return_surface(cairo_surface, **kwargs)
+
+    # #########################################################
+    
     #
     # Private
     #
