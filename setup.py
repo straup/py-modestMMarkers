@@ -1,4 +1,4 @@
-# $Id: setup.py,v 1.1 2009/05/11 15:40:25 asc Exp $
+# $Id: setup.py,v 1.2 2009/05/17 16:28:19 asc Exp $
 
 # http://peak.telecommunity.com/DevCenter/setuptools
 # http://ianbicking.org/docs/setuptools-presentation/
@@ -13,7 +13,7 @@ except:
 readme = file('README','rb').read()
 
 local__name = 'modestMMarkers'
-local__version = '0.2'
+local__version = '0.3'
 local__url = 'http://www.aaronland.info/python/%s' % local__name
 local__download = '%s/%s-%s.tar.gz' % (local__url, local__name, local__version)
 

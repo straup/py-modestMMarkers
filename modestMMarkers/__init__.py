@@ -1,5 +1,5 @@
 __package__    = "modestMMarkers"
-__version__    = "0.2"
+__version__    = "0.3"
 __author__     = "Aaron Straup Cope"
 __url__        = "http://github.com/straup/py-modestMMarkers"
 __date__       = "$Date: 2009/05/09 17:05:27 $"
@@ -26,9 +26,11 @@ def _pil2cairo (img) :
     data = img.tostring()
     a = array.array('B', data)
     
-    return cairo.ImageSurface.create_for_data (a, mode, w, h, (w * 4))
+    return cairo.ImageSurface.create_for_data(a, mode, w, h, (w * 4))
     
 def _cairo2pil(surface) :
+
+    # THIS MANGLES COLOURS...GRRR
     
     mode='RGBA'
     
@@ -90,6 +92,37 @@ class modestMMarkers :
         self.mm_obj = mm_obj
 
     # #########################################################
+
+    def draw_sequence (self, mm_img, sequence, **kwargs) :
+
+	cairo_surface = self._setup_surface(mm_img)
+        
+        for action in sequence :
+
+        	method = action[0]
+        	data = action[1]
+
+                if len(action) == 3:
+			extra = action[2]
+		else :
+                    	extra = {}
+
+                extra['return_as_cairo'] = True
+                
+            	if method == 'points' :
+			cairo_surface = self.draw_points(cairo_surface, data, **extra)
+                elif method == 'polys' :
+                    	cairo_surface = self.draw_polylines(cairo_surface, data, **extra)
+                elif method == 'bbox' :
+                    	cairo_surface = self.draw_bounding_box(cairo_surface, data, **extra)
+                else :
+                    	pass
+
+	#
+
+        return self._return_surface(cairo_surface, **kwargs)
+
+    # #########################################################
     
     def draw_points (self, mm_img, coords, **kwargs):
 
@@ -101,25 +134,36 @@ class modestMMarkers :
         
         Additional valid arguments are:
 
-        * colo(r) : a tuple containing RBG values (default is (255, 0, 132)
+        * colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
+
+        * border_colo(u)r : a tuple containing RBG values (default is (255, 0, 132)        
 
         * opacity_fill : a float defining the opacity of each point (default is .4)
 
-        * border_fill : a float defining the opacity of the border for each
+        * opacity_border : a float defining the opacity of the border for each
           point (default is None)
 
         * radius: the radius of each point, in pixels (default is 10)
 
-        Returns a PIL image.
+	* return_as_cairo: a boolean indicating whether to return the image as
+          a cairo.ImageSurface object (default is False)
+
+        Returns a PIL image (unless the 'return_as_cairo' flag is True).                
         """
         
         r = 255
         g = 0
         b = 132
 
+	b_r = 255
+        b_g = 0
+        b_b = 132
+        
         radius = 10
         opacity_fill = .4
         opacity_border = None
+
+        line_width = 2
         
         if kwargs.has_key('color') :
             r = kwargs['color'][0]
@@ -131,6 +175,16 @@ class modestMMarkers :
             g = kwargs['colour'][1]
             b = kwargs['colour'][2]
 
+        if kwargs.has_key('border_color') :
+            b_r = kwargs['border_color'][0]
+            b_g = kwargs['border_color'][1]
+            b_b = kwargs['border_color'][2]
+
+        if kwargs.has_key('border_colour') :
+            b_r = kwargs['border_colour'][0]
+            b_g = kwargs['border_colour'][1]
+            b_b = kwargs['border_colour'][2]
+
         if kwargs.has_key('opacity_fill') :
             opacity_fill = kwargs['opacity_fill']
 
@@ -139,8 +193,15 @@ class modestMMarkers :
 
         if kwargs.has_key('radius') :
             radius = kwargs['radius']
-            
-        cairo_surface = _pil2cairo(mm_img)
+
+	if kwargs.has_key('line_width') :
+            line_width = kwargs['line_width']
+
+        #
+
+        cairo_surface = self._setup_surface(mm_img, **kwargs)
+
+        #
 
         for c in coords :
 
@@ -154,11 +215,11 @@ class modestMMarkers :
 
             if opacity_border :
                 ctx.arc(pt.x, pt.y, radius, 0, 360)
-                ctx.set_source_rgba(r, g, b, opacity_border)
+                ctx.set_source_rgba(b_r, b_g, b_b, opacity_border)
+            	ctx.set_line_width(line_width)                        
                 ctx.stroke()
 
-                
-        return _cairo2pil(cairo_surface)
+	return self._return_surface(cairo_surface, **kwargs)
 
     # #########################################################
 
@@ -174,14 +235,19 @@ class modestMMarkers :
         
         Additional valid arguments are:
 
-        * colo(r) : a tuple containing RBG values (default is (255, 0, 132)
+        * colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
 
+        * border_colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
+        
         * opacity_fill : a float defining the opacity of each point (default is .4)
 
         * border_fill : a float defining the opacity of the border for each
           point (default is None)
 
-        Returns a PIL image.
+	* return_as_cairo: a boolean indicating whether to return the image as
+          a cairo.ImageSurface object (default is False)
+
+        Returns a PIL image (unless the 'return_as_cairo' flag is True).
         """
 
         (sw_lat, sw_lon, ne_lat, ne_lon) = _calculate_bbox_for_coords(coords)
@@ -206,20 +272,31 @@ class modestMMarkers :
 
         Additional valid arguments are:
 
-        * colo(r) : a tuple containing RBG values (default is (255, 0, 132)
+        * colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
 
+        * border_colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
+        
         * opacity_fill : a float defining the opacity of each point (default is .4)
 
-        * border_fill : a float defining the opacity of the border for each
+        * opacity_border : a float defining the opacity of the border for each
           point (default is None)
 
-        Returns a PIL image.
+	* return_as_cairo: a boolean indicating whether to return the image as
+          a cairo.ImageSurface object (default is False)
+
+        Returns a PIL image (unless the 'return_as_cairo' flag is True).
         """
 
         r = 255
         g = 0
         b = 132
 
+        b_r = 255
+        b_g = 0
+        b_b = 132
+
+	line_width = 2
+        
         opacity_fill = .4
         opacity_border = 1
 
@@ -233,14 +310,31 @@ class modestMMarkers :
             g = kwargs['colour'][1]
             b = kwargs['colour'][2]
 
+        if kwargs.has_key('border_color') :
+            b_r = kwargs['border_color'][0]
+            b_g = kwargs['border_color'][1]
+            b_b = kwargs['border_color'][2]
+        
+        if kwargs.has_key('border_colour') :
+            b_r = kwargs['border_colour'][0]
+            b_g = kwargs['border_colour'][1]
+            b_b = kwargs['border_colour'][2]
+
         if kwargs.has_key('opacity_fill') :
             opacity_fill = kwargs['opacity_fill']
 
         if kwargs.has_key('opacity_border') :
             opacity_border = kwargs['opacity_border']
-            
-        cairo_surface = _pil2cairo(mm_img)
-                
+
+	if kwargs.has_key('line_width') :
+            line_width = kwargs['line_width']
+
+	#
+
+        cairo_surface = self._setup_surface(mm_img, **kwargs)
+
+	#
+        
         for coords in polylines :
             points = []
 
@@ -253,11 +347,11 @@ class modestMMarkers :
                 ctx.fill()
 
             ctx = self._draw_polyline_points(cairo_surface, points)
-            ctx.set_source_rgba(r, g, b, opacity_border)
-            ctx.set_line_width(2)        
+            ctx.set_source_rgba(b_r, b_g, b_b, opacity_border)
+            ctx.set_line_width(line_width)        
             ctx.stroke()
-            
-        return _cairo2pil(cairo_surface)
+
+	return self._return_surface(cairo_surface, **kwargs)
         
     # #########################################################
     
@@ -271,14 +365,19 @@ class modestMMarkers :
 
         Additional valid arguments are:
 
-        * colo(r) : a tuple containing RBG values (default is (255, 0, 132)
+        * colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
 
+        * border_colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
+        
         * opacity_fill : a float defining the opacity of each point (default is .4)
 
         * border_fill : a float defining the opacity of the border for each
           point (default is None)
 
-        Returns a PIL image.
+	* return_as_cairo: a boolean indicating whether to return the image as
+          a cairo.ImageSurface object (default is False)
+
+        Returns a PIL image (unless the 'return_as_cairo' flag is True).
         """
         
         return self.draw_polylines(mm_img, [coords], **kwargs)
@@ -312,4 +411,22 @@ class modestMMarkers :
         ctx.close_path()
         return ctx
 
+    # #########################################################
+
+    def _setup_surface (self, mm_img, **kwargs) :
+
+	if isinstance(mm_img, cairo.ImageSurface) :        
+            return mm_img
+        
+        return _pil2cairo(mm_img)
+        
+    # #########################################################
+
+    def _return_surface(self, cairo_surface, **kwargs) :
+
+	if kwargs.has_key('return_as_cairo') and kwargs['return_as_cairo'] :
+            return cairo_surface
+
+        return _cairo2pil(cairo_surface)
+        
     # #########################################################
