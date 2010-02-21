@@ -233,9 +233,9 @@ class modestMMarkers :
                        {'latitude':ne_lat, 'longitude': sw_lon})
 
         return self.draw_polyline(mm_img, bbox_coords, **kwargs)
-    
+
     # #########################################################
-    
+
     def draw_polylines (self, mm_img, polylines, **kwargs) :
 
         """
@@ -250,7 +250,7 @@ class modestMMarkers :
         * colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
 
         * border_colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
-        
+
         * opacity_fill : a float defining the opacity of each point (default is .4)
 
         * opacity_border : a float defining the opacity of the border for each
@@ -274,7 +274,7 @@ class modestMMarkers :
         b_b = 132
 
 	line_width = 2
-        
+
         opacity_fill = .4
         opacity_border = 1
 
@@ -282,7 +282,7 @@ class modestMMarkers :
             r = kwargs['color'][0]
             g = kwargs['color'][1]
             b = kwargs['color'][2]
-        
+
         if kwargs.has_key('colour') :
             r = kwargs['colour'][0]
             g = kwargs['colour'][1]
@@ -292,7 +292,7 @@ class modestMMarkers :
             b_r = kwargs['border_color'][0]
             b_g = kwargs['border_color'][1]
             b_b = kwargs['border_color'][2]
-        
+
         if kwargs.has_key('border_colour') :
             b_r = kwargs['border_colour'][0]
             b_g = kwargs['border_colour'][1]
@@ -312,7 +312,7 @@ class modestMMarkers :
         cairo_surface = self._setup_surface(mm_img, **kwargs)
 
 	#
-        
+
         for coords in polylines :
             points = []
 
@@ -326,13 +326,66 @@ class modestMMarkers :
 
             ctx = self._draw_polyline_points(cairo_surface, points)
             ctx.set_source_rgba(b_r, b_g, b_b, opacity_border)
-            ctx.set_line_width(line_width)        
+            ctx.set_line_width(line_width)
             ctx.stroke()
 
 	return self._return_surface(cairo_surface, **kwargs)
-        
+
     # #########################################################
-    
+
+    def draw_lines (self, mm_img, lines, **kwargs) :
+
+        """
+        Draw a list of lines (defined by coords) on a ModestMaps derived
+        image (defined by mm_img).
+
+        coords is a list of list of dicts, whose keys are 'latitude' and
+        'longitude'.
+
+        Additional valid arguments are:
+
+        * colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
+
+        * opacity:
+
+	* line_width: the width of the line used to stroke the border (default
+	  is 2)
+
+	* return_as_cairo: a boolean indicating whether to return the image as
+          a cairo.ImageSurface object (default is False)
+
+        Returns a PIL image (unless the 'return_as_cairo' flag is True).
+        """
+
+        r = 255
+        g = 0
+        b = 132
+
+        if kwargs.has_key('color') :
+            r = kwargs['color'][0]
+            g = kwargs['color'][1]
+            b = kwargs['color'][2]
+
+        opacity = kwargs.get('opacity', 1)
+        line_width = kwargs.get('line_width', 2)
+
+        cairo_surface = self._setup_surface(mm_img, **kwargs)
+
+        for coords in lines :
+            points = []
+
+            for c in coords :
+                points.append(self._coord_to_point(c))
+
+            ctx = self._draw_polyline_points(cairo_surface, points, False)
+            ctx.set_source_rgba(r, g, b, opacity)
+            ctx.set_line_width(line_width)
+            ctx.stroke()
+
+	return self._return_surface(cairo_surface, **kwargs)
+
+    # #########################################################
+
     def draw_polyline (self, mm_img, coords, **kwargs) :
 
         """
@@ -346,7 +399,7 @@ class modestMMarkers :
         * colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
 
         * border_colo(u)r : a tuple containing RBG values (default is (255, 0, 132)
-        
+
         * opacity_fill : a float defining the opacity of each point (default is .4)
 
         * border_fill : a float defining the opacity of the border for each
@@ -360,7 +413,7 @@ class modestMMarkers :
 
         Returns a PIL image (unless the 'return_as_cairo' flag is True).
         """
-        
+
         return self.draw_polylines(mm_img, [coords], **kwargs)
 
     # #########################################################
@@ -375,10 +428,12 @@ class modestMMarkers :
     	sequence is a list of marker tuples to draw, consisting of an action, a
     	list of coordinate and any optional keyword arguments to pass to the
     	delegate method (the one that will actually draw the markers)
-        
+
 	Valid actions are:
 
     	* points (calls 'draw_points')
+
+        * lines (calls 'draw_lines')
 
         * polys (calls 'draw_polylines')
 
@@ -390,12 +445,12 @@ class modestMMarkers :
 
 	* return_as_cairo: a boolean indicating whether to return the image as
           a cairo.ImageSurface object (default is False)
-        
+
         Returns a PIL image (unless the 'return_as_cairo' flag is True).
         """
-        
+
 	cairo_surface = self._setup_surface(mm_img)
-        
+
         for action in sequence :
 
         	method = action[0]
@@ -405,11 +460,13 @@ class modestMMarkers :
 			extra = action[2]
 		else :
                     	extra = {}
-                
+
                 extra['return_as_cairo'] = True
-                
+
             	if method == 'points' :
 			cairo_surface = self.draw_points(cairo_surface, data, **extra)
+                elif method == 'lines' :
+                    	cairo_surface = self.draw_lines(cairo_surface, data, **extra)
                 elif method == 'polys' :
                     	cairo_surface = self.draw_polylines(cairo_surface, data, **extra)
                 elif method == 'bbox' :
@@ -421,33 +478,35 @@ class modestMMarkers :
 
         return self._return_surface(cairo_surface, **kwargs)
 
-    # #########################################################
-    
+     #########################################################
+
     #
     # Private
     #
-    
+
     def _coord_to_point (self, c) :
         loc = ModestMaps.Geo.Location(c['latitude'], c['longitude'])
         return self.mm_obj.locationPoint(loc)
 
     # #########################################################
-    
-    def _draw_polyline_points (self, surface, points) :
-        
+
+    def _draw_polyline_points (self, surface, points, close_path=True) :
+
         first = points[0]
         x = int(first.x)
         y = int(first.y)
 
         ctx = cairo.Context(surface)
         ctx.move_to(int(first.x), int(first.y))
-        
+
         for pt in points :
             x = int(pt.x)
             y = int(pt.y)
             ctx.line_to(x, y)
 
-        ctx.close_path()
+        if close_path:
+            ctx.close_path()
+
         return ctx
 
     # #########################################################
