@@ -14,7 +14,7 @@ import array
 # Utility functions (private, so don't come crying to me if they vanish)
 #
     
-def _pil2cairo (img) :
+def pil2cairo (img) :
 
     # check me...
     img = img.convert('RGBA')
@@ -28,7 +28,7 @@ def _pil2cairo (img) :
     
     return cairo.ImageSurface.create_for_data(a, mode, w, h, (w * 4))
     
-def _cairo2pil(surface) :
+def cairo2pil(surface) :
 
     # THIS MANGLES COLOURS...GRRR
     
@@ -515,16 +515,16 @@ class modestMMarkers :
 
 	if isinstance(mm_img, cairo.ImageSurface) :        
             return mm_img
-        
-        return _pil2cairo(mm_img)
-        
+
+        return pil2cairo(mm_img)
+
     # #########################################################
 
     def _return_surface(self, cairo_surface, **kwargs) :
 
-	if kwargs.has_key('return_as_cairo') and kwargs['return_as_cairo'] :
+	if kwargs.get('return_as_cairo', False):
             return cairo_surface
 
-        return _cairo2pil(cairo_surface)
-        
+        return cairo2pil(cairo_surface)
+
     # #########################################################
